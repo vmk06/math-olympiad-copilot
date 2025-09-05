@@ -7,7 +7,7 @@ export async function POST(req) {
 
   // Get the API key from environment variables
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+  const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro"});
 
   // This is our carefully crafted prompt
   const prompt = `
