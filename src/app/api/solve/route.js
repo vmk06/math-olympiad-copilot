@@ -1,33 +1,42 @@
 // File: src/app/api/solve/route.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from 'openai';
+
+// Initialize the OpenAI client with your API key from the environment variables
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req) {
+  // Get the user's problem from the request body
   const { problem } = await req.json();
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  
-  // We use the older model which is available in your region
-  const model = genAI.getGenerativeModel({ model: "text-bison-001"});
-
-  const prompt = `
-    You are an expert Math Olympiad coach.
-    A student has submitted the following problem:
-    ---
-    ${problem}
-    ---
-    Please provide a step-by-step solution based on pre-college mathematics.
-  `;
-  
   try {
-    // THIS IS THE FIX: We go back to using generateContent, which works for all models.
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // This is the call to the OpenAI API
+    const chatCompletion = await openai.chat.completions.create({
+      // We use gpt-3.5-turbo as it's fast and cost-effective
+      model: 'gpt-3.5-turbo', 
+      messages: [
+        // This is the "system prompt" that instructs the AI on its role
+        { 
+          role: 'system', 
+          content: 'You are an expert Math Olympiad coach specializing in preparing students for IOQM and IMO. Provide clear, step-by-step solutions based on pre-college mathematics. Explain your reasoning for each step.' 
+        },
+        // This is the user's actual problem
+        { 
+          role: 'user', 
+          content: problem 
+        },
+      ],
+    });
 
-    return Response.json({ solution: text });
+    // Extract the AI's response text
+    const solutionText = chatCompletion.choices[0].message.content;
+
+    // Send the response back to the frontend
+    return Response.json({ solution: solutionText });
 
   } catch (error) {
-    console.error("Full error object:", error);
-    return Response.json({ solution: "Sorry, I encountered an error." }, { status: 500 });
+    console.error("Full OpenAI error object:", error);
+    return Response.json({ solution: "Sorry, I encountered an error with the OpenAI API." }, { status: 500 });
   }
 }
