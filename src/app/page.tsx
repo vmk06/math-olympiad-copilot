@@ -1,9 +1,19 @@
 // File: src/app/page.tsx
 "use client"; 
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
+// Import KaTeX styles directly
+import 'katex/dist/katex.min.css';
+// We'll use a dynamic import for the rendering library to ensure it only runs client-side
+import dynamic from 'next/dynamic';
 
-// The corrected helper function
+// Dynamically import the React-Markdown and React-KaTeX components
+// This ensures they are only loaded and run in the browser, not on the server during build
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
+const RemarkMath = dynamic(() => import('remark-math'), { ssr: false });
+const RehypeKatex = dynamic(() => import('rehype-katex'), { ssr: false });
+
+// Helper to parse the structured response from the AI
 const parseAIResponse = (responseText: string) => {
   const hints = [];
   const hint1 = responseText.match(/<HINT_1>([\s\S]*?)<\/HINT_1>/);
@@ -25,7 +35,6 @@ export default function HomePage() {
   const [problem, setProblem] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // New state variables for the tutoring workflow
   const [hints, setHints] = useState<string[]>([]);
   const [solution, setSolution] = useState('');
   const [currentHintIndex, setCurrentHintIndex] = useState(-1);
@@ -34,7 +43,6 @@ export default function HomePage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    // Reset state for a new problem
     setHints([]);
     setSolution('');
     setCurrentHintIndex(-1);
@@ -96,7 +104,13 @@ export default function HomePage() {
           {hints.slice(0, currentHintIndex + 1).map((hint, index) => (
             <div key={index} className="bg-gray-800 rounded-lg p-6 mb-4">
               <h2 className="text-2xl font-bold mb-4">Hint {index + 1}:</h2>
-              <p style={{ whiteSpace: 'pre-wrap' }}>{hint}</p>
+              {/* Render hints with Markdown and KaTeX */}
+              <ReactMarkdown 
+                remarkPlugins={[RemarkMath]} 
+                rehypePlugins={[RehypeKatex]}
+              >
+                {hint}
+              </ReactMarkdown>
             </div>
           ))}
 
@@ -118,7 +132,13 @@ export default function HomePage() {
         <div className="w-full max-w-2xl mt-8 bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Full Solution:</h2>
           <div className="prose prose-invert max-w-none">
-            <p style={{ whiteSpace: 'pre-wrap' }}>{solution}</p>
+            {/* Render solution with Markdown and KaTeX */}
+            <ReactMarkdown 
+              remarkPlugins={[RemarkMath]} 
+              rehypePlugins={[RehypeKatex]}
+            >
+              {solution}
+            </ReactMarkdown>
           </div>
         </div>
       )}
