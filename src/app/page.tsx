@@ -1,25 +1,23 @@
 // File: src/app/page.tsx
 "use client"; 
 
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, FormEvent } from 'react';
+
 // Import KaTeX styles directly
 import 'katex/dist/katex.min.css';
-// We'll use a dynamic import for the rendering library to ensure it only runs client-side
-import dynamic from 'next/dynamic';
 
-// Dynamically import the React-Markdown and React-KaTeX components
-// This ensures they are only loaded and run in the browser, not on the server during build
-const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
-const RemarkMath = dynamic(() => import('remark-math'), { ssr: false });
-const RehypeKatex = dynamic(() => import('rehype-katex'), { ssr: false });
+// Use standard, direct imports for markdown and the plugins
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // Helper to parse the structured response from the AI
 const parseAIResponse = (responseText: string) => {
   const hints = [];
-  const hint1 = responseText.match(/<HINT_1>([\s\S]*?)<\/HINT_1>/);
-  const hint2 = responseText.match(/<HINT_2>([\s\S]*?)<\/HINT_2>/);
-  const hint3 = responseText.match(/<HINT_3>([\s\S]*?)<\/HINT_3>/);
-  const solution = responseText.match(/<FULL_SOLUTION>([\s\S]*?)<\/FULL_SOLUTION>/);
+  const hint1 = responseText.match(/<HINT_1>([\sS]*?)<\/HINT_1>/);
+  const hint2 = responseText.match(/<HINT_2>([\sS]*?)<\/HINT_2>/);
+  const hint3 = responseText.match(/<HINT_3>([\sS]*?)<\/HINT_3>/);
+  const solution = responseText.match(/<FULL_SOLUTION>([\sS]*?)<\/FULL_SOLUTION>/);
 
   if (hint1) hints.push(hint1[1].trim());
   if (hint2) hints.push(hint2[1].trim());
@@ -104,10 +102,9 @@ export default function HomePage() {
           {hints.slice(0, currentHintIndex + 1).map((hint, index) => (
             <div key={index} className="bg-gray-800 rounded-lg p-6 mb-4">
               <h2 className="text-2xl font-bold mb-4">Hint {index + 1}:</h2>
-              {/* Render hints with Markdown and KaTeX */}
               <ReactMarkdown 
-                remarkPlugins={[RemarkMath]} 
-                rehypePlugins={[RehypeKatex]}
+                remarkPlugins={[remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
               >
                 {hint}
               </ReactMarkdown>
@@ -132,10 +129,9 @@ export default function HomePage() {
         <div className="w-full max-w-2xl mt-8 bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Full Solution:</h2>
           <div className="prose prose-invert max-w-none">
-            {/* Render solution with Markdown and KaTeX */}
             <ReactMarkdown 
-              remarkPlugins={[RemarkMath]} 
-              rehypePlugins={[RehypeKatex]}
+              remarkPlugins={[remarkMath]} 
+              rehypePlugins={[rehypeKatex]}
             >
               {solution}
             </ReactMarkdown>
