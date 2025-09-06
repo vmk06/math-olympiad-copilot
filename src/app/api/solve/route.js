@@ -6,7 +6,7 @@ export async function POST(req) {
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   
-  // *** CHANGE #1: We are now requesting the older PaLM 2 model ***
+  // We use the older model which is available in your region
   const model = genAI.getGenerativeModel({ model: "text-bison-001"});
 
   const prompt = `
@@ -19,16 +19,14 @@ export async function POST(req) {
   `;
   
   try {
-    // *** CHANGE #2: The function to call for this model is generateText ***
-    const result = await model.generateText(prompt);
-    
-    // The result format is simpler for this model
-    const solutionText = result;
+    // THIS IS THE FIX: We go back to using generateContent, which works for all models.
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    return Response.json({ solution: solutionText });
+    return Response.json({ solution: text });
 
   } catch (error) {
-    // We are logging the full error to the server console for debugging
     console.error("Full error object:", error);
     return Response.json({ solution: "Sorry, I encountered an error." }, { status: 500 });
   }
