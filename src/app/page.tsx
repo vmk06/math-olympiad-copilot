@@ -3,8 +3,8 @@
 
 import { useState, FormEvent } from 'react';
 
-// A helper function to parse the structured response from the AI
-const parseAIResponse = (responseText) => {
+// The corrected helper function
+const parseAIResponse = (responseText: string) => {
   const hints = [];
   const hint1 = responseText.match(/<HINT_1>([\s\S]*?)<\/HINT_1>/);
   const hint2 = responseText.match(/<HINT_2>([\s\S]*?)<\/HINT_2>/);
