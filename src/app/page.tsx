@@ -2,11 +2,8 @@
 "use client"; 
 
 import { useState, FormEvent } from 'react';
-
-// Import KaTeX styles directly
 import 'katex/dist/katex.min.css';
 
-// Use standard, direct imports for markdown and the plugins
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -14,10 +11,10 @@ import rehypeKatex from 'rehype-katex';
 // Helper to parse the structured response from the AI
 const parseAIResponse = (responseText: string) => {
   const hints = [];
-  const hint1 = responseText.match(/<HINT_1>([\sS]*?)<\/HINT_1>/);
-  const hint2 = responseText.match(/<HINT_2>([\sS]*?)<\/HINT_2>/);
-  const hint3 = responseText.match(/<HINT_3>([\sS]*?)<\/HINT_3>/);
-  const solution = responseText.match(/<FULL_SOLUTION>([\sS]*?)<\/FULL_SOLUTION>/);
+  const hint1 = responseText.match(/<HINT_1>([\s\S]*?)<\/HINT_1>/);
+  const hint2 = responseText.match(/<HINT_2>([\s\S]*?)<\/HINT_2>/);
+  const hint3 = responseText.match(/<HINT_3>([\s\S]*?)<\/HINT_3>/);
+  const solution = responseText.match(/<FULL_SOLUTION>([\s\S]*?)<\/FULL_SOLUTION>/);
 
   if (hint1) hints.push(hint1[1].trim());
   if (hint2) hints.push(hint2[1].trim());
@@ -57,7 +54,7 @@ export default function HomePage() {
     
     setHints(parsedData.hints);
     setSolution(parsedData.solution);
-    setCurrentHintIndex(0); // Show the first hint
+    setCurrentHintIndex(0);
     setIsLoading(false);
   };
 
@@ -102,12 +99,15 @@ export default function HomePage() {
           {hints.slice(0, currentHintIndex + 1).map((hint, index) => (
             <div key={index} className="bg-gray-800 rounded-lg p-6 mb-4">
               <h2 className="text-2xl font-bold mb-4">Hint {index + 1}:</h2>
-              <ReactMarkdown 
-                remarkPlugins={[remarkMath]} 
-                rehypePlugins={[rehypeKatex]}
-              >
-                {hint}
-              </ReactMarkdown>
+              {/* Note: No 'prose' class here either now */}
+              <div className="max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkMath]} 
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {hint}
+                </ReactMarkdown>
+              </div>
             </div>
           ))}
 
@@ -128,7 +128,8 @@ export default function HomePage() {
       {showSolution && (
         <div className="w-full max-w-2xl mt-8 bg-gray-800 rounded-lg p-6">
           <h2 className="text-2xl font-bold mb-4">Full Solution:</h2>
-          <div className="prose prose-invert max-w-none">
+          {/* *** THIS IS THE MAIN CHANGE *** I have removed 'prose prose-invert' from this div */}
+          <div className="max-w-none">
             <ReactMarkdown 
               remarkPlugins={[remarkMath]} 
               rehypePlugins={[rehypeKatex]}
