@@ -1,31 +1,68 @@
 // File: src/app/page.tsx
 "use client"; 
 
-// CHANGE #1: We need to import 'FormEvent' from React
 import { useState, FormEvent } from 'react';
+
+// A helper function to parse the structured response from the AI
+const parseAIResponse = (responseText) => {
+  const hints = [];
+  const hint1 = responseText.match(/<HINT_1>([\s\S]*?)<\/HINT_1>/);
+  const hint2 = responseText.match(/<HINT_2>([\s\S]*?)<\/HINT_2>/);
+  const hint3 = responseText.match(/<HINT_3>([\s\S]*?)<\/HINT_3>/);
+  const solution = responseText.match(/<FULL_SOLUTION>([\s\S]*?)<\/FULL_SOLUTION>/);
+
+  if (hint1) hints.push(hint1[1].trim());
+  if (hint2) hints.push(hint2[1].trim());
+  if (hint3) hints.push(hint3[1].trim());
+
+  return {
+    hints,
+    solution: solution ? solution[1].trim() : "Sorry, I couldn't generate a full solution.",
+  };
+};
 
 export default function HomePage() {
   const [problem, setProblem] = useState('');
-  const [solution, setSolution] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // New state variables for the tutoring workflow
+  const [hints, setHints] = useState([]);
+  const [solution, setSolution] = useState('');
+  const [currentHintIndex, setCurrentHintIndex] = useState(-1);
+  const [showSolution, setShowSolution] = useState(false);
 
-  // CHANGE #2: We add the type information to the 'event' parameter here
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); 
-    setIsLoading(true); 
-    setSolution(''); 
+    event.preventDefault();
+    setIsLoading(true);
+    // Reset state for a new problem
+    setHints([]);
+    setSolution('');
+    setCurrentHintIndex(-1);
+    setShowSolution(false);
 
     const response = await fetch('/api/solve', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ problem: problem }),
     });
 
     const data = await response.json();
-    setSolution(data.solution); 
-    setIsLoading(false); 
+    const parsedData = parseAIResponse(data.solution);
+    
+    setHints(parsedData.hints);
+    setSolution(parsedData.solution);
+    setCurrentHintIndex(0); // Show the first hint
+    setIsLoading(false);
+  };
+
+  const handleNextHint = () => {
+    if (currentHintIndex < hints.length - 1) {
+      setCurrentHintIndex(currentHintIndex + 1);
+    }
+  };
+
+  const handleShowSolution = () => {
+    setShowSolution(true);
   };
 
   return (
@@ -41,7 +78,7 @@ export default function HomePage() {
           value={problem} 
           onChange={(e) => setProblem(e.target.value)}
           className="w-full h-40 p-4 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          placeholder="For example: 'Prove that for any prime p > 3, p^2 ≡ 1 (mod 24).'"
+          placeholder="e.g., 'Prove that for any prime p > 3, p^2 ≡ 1 (mod 24).'"
         ></textarea>
         
         <button 
@@ -49,15 +86,39 @@ export default function HomePage() {
           className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 disabled:bg-gray-500"
           disabled={isLoading || !problem}
         >
-          {isLoading ? 'Thinking...' : 'Solve Problem'}
+          {isLoading ? 'Thinking...' : 'Begin Tutoring'}
         </button>
       </form>
 
-      {solution && (
+      {/* Display Hints */}
+      {currentHintIndex >= 0 && !showSolution && (
+        <div className="w-full max-w-2xl mt-8">
+          {hints.slice(0, currentHintIndex + 1).map((hint, index) => (
+            <div key={index} className="bg-gray-800 rounded-lg p-6 mb-4">
+              <h2 className="text-2xl font-bold mb-4">Hint {index + 1}:</h2>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{hint}</p>
+            </div>
+          ))}
+
+          {/* Logic for the next hint / show solution buttons */}
+          {currentHintIndex < hints.length - 1 ? (
+            <button onClick={handleNextHint} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
+              Show Next Hint
+            </button>
+          ) : (
+            <button onClick={handleShowSolution} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg">
+              Show Full Solution
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Display Full Solution */}
+      {showSolution && (
         <div className="w-full max-w-2xl mt-8 bg-gray-800 rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Solution:</h2>
+          <h2 className="text-2xl font-bold mb-4">Full Solution:</h2>
           <div className="prose prose-invert max-w-none">
-             <p style={{ whiteSpace: 'pre-wrap' }}>{solution}</p>
+            <p style={{ whiteSpace: 'pre-wrap' }}>{solution}</p>
           </div>
         </div>
       )}
