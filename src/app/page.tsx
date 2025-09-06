@@ -26,7 +26,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   
   // New state variables for the tutoring workflow
-  const [hints, setHints] = useState([]);
+  const [hints, setHints] = useState<string[]>([]);
   const [solution, setSolution] = useState('');
   const [currentHintIndex, setCurrentHintIndex] = useState(-1);
   const [showSolution, setShowSolution] = useState(false);
